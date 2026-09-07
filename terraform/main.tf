@@ -1,135 +1,111 @@
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "google" {
   project = var.project_id
   region  = var.region
 }
 
+data "google_project" "staging" {
+  project_id = var.project_id
+}
+
 locals {
-  # Minimum APIs required for project bootstrap and GKE deployment.
-  required_apis = toset([
+  approved_foundation_apis = toset([
+    "billingbudgets.googleapis.com",
     "serviceusage.googleapis.com",
-    "compute.googleapis.com",
-    "container.googleapis.com",
-    "iam.googleapis.com",
-    "monitoring.googleapis.com",
-    "logging.googleapis.com",
-  ])
-
-  # Least-privilege baseline recommended by GKE for node service accounts.
-  gke_node_sa_roles = toset([
-    "roles/container.defaultNodeServiceAccount",
+    "storage.googleapis.com",
   ])
 }
 
-resource "google_project_service" "required" {
-  for_each = local.required_apis
+resource "google_project" "staging" {
+  project_id      = var.project_id
+  name            = data.google_project.staging.name
+  billing_account = var.billing_account_id
+  labels          = var.foundation_labels
 
-  project            = var.project_id
-  service            = each.value
-  disable_on_destroy = false
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      folder_id,
+      org_id,
+    ]
+  }
 }
 
-resource "google_service_account" "gke_nodes" {
-  account_id   = "online-shop-gke-nodes"
-  display_name = "online-shop GKE nodes"
-  description  = "Node service account for the online-shop GKE cluster"
+resource "google_project_service" "foundation" {
+  for_each = local.approved_foundation_apis
+
+  project                    = var.project_id
+  service                    = each.value
+  disable_on_destroy         = false
+  disable_dependent_services = false
 }
 
-resource "google_project_iam_member" "gke_nodes" {
-  for_each = local.gke_node_sa_roles
+resource "google_storage_bucket" "terraform_state" {
+  name                        = "sre-platform-staging-507220-tf-state"
+  location                    = var.state_bucket_location
+  labels                      = var.foundation_labels
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  versioning {
+    enabled = true
+  }
+
+  retention_policy {
+    retention_period = 2592000
+  }
+
+  soft_delete_policy {
+    retention_duration_seconds = 604800
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_billing_budget" "staging" {
+  billing_account = var.billing_account_id
+  display_name    = "sre-platform-staging-budget-100-cad"
+
+  budget_filter {
+    projects = ["projects/${data.google_project.staging.number}"]
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "CAD"
+      units         = "100"
+    }
+  }
+
+  dynamic "threshold_rules" {
+    for_each = var.budget_threshold_rules
+
+    content {
+      threshold_percent = threshold_rules.value.threshold_percent
+      spend_basis       = threshold_rules.value.spend_basis
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_project_iam_member" "optional_baseline" {
+  for_each = var.project_iam_members
 
   project = var.project_id
-  role    = each.value
-  member  = "serviceAccount:${google_service_account.gke_nodes.email}"
-}
+  role    = each.value.role
+  member  = each.value.member
 
-resource "google_compute_network" "vpc" {
-  name                    = var.network_name
-  auto_create_subnetworks = false
-
-  depends_on = [google_project_service.required]
-}
-
-resource "google_compute_subnetwork" "subnet" {
-  name          = "${var.network_name}-subnet"
-  region        = var.region
-  network       = google_compute_network.vpc.id
-  ip_cidr_range = var.subnet_cidr
-
-  depends_on = [google_project_service.required]
-}
-
-resource "google_container_cluster" "gke" {
-  name     = var.cluster_name
-  location = var.region
-
-  remove_default_node_pool = true
-  initial_node_count       = 1
-
-  network    = google_compute_network.vpc.id
-  subnetwork = google_compute_subnetwork.subnet.id
-
-  workload_identity_config {
-    workload_pool = "${var.project_id}.svc.id.goog"
-  }
-
-  ip_allocation_policy {}
-
-  release_channel {
-    channel = "REGULAR"
-  }
-
-  depends_on = [google_project_service.required]
-}
-
-locals {
-  pools = {
-    default = {
-      machine = var.default_machine_type
-      labels  = { role = "default" }
-    }
-    observability = {
-      machine = var.observability_machine_type
-      labels  = { role = "observability" }
-    }
-    chaos = {
-      machine = var.chaos_machine_type
-      labels  = { role = "chaos" }
+  lifecycle {
+    precondition {
+      condition = (
+        each.value.role != "roles/billing.admin" &&
+        !contains(["allUsers", "allAuthenticatedUsers"], each.value.member)
+      )
+      error_message = "The staging IAM baseline must not grant billing.admin or public principals."
     }
   }
 }
-
-resource "google_container_node_pool" "pools" {
-  for_each = local.pools
-
-  name     = each.key
-  cluster  = google_container_cluster.gke.name
-  location = var.region
-
-  node_config {
-    service_account = google_service_account.gke_nodes.email
-    machine_type    = each.value.machine
-    labels          = each.value.labels
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
-  }
-
-  autoscaling {
-    min_node_count = 0
-    max_node_count = 5
-  }
-
-  depends_on = [
-    google_project_service.required,
-    google_project_iam_member.gke_nodes,
-  ]
-}
-

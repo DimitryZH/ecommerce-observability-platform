@@ -1,16 +1,9 @@
-output "project_id" {
-  value = var.project_id
+output "staging_project_id" {
+  description = "The existing staging project under Terraform control after import."
+  value       = google_project.staging.project_id
 }
 
-output "cluster_name" {
-  value = google_container_cluster.gke.name
+output "state_bucket_name" {
+  description = "The existing remote state bucket managed by this configuration."
+  value       = google_storage_bucket.terraform_state.name
 }
-
-output "region" {
-  value = var.region
-}
-
-output "node_pools" {
-  value = keys(google_container_node_pool.pools)
-}
-

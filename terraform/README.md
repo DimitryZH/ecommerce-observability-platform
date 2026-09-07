@@ -1,51 +1,59 @@
-# Terraform — GKE Observability Platform
+# Staging Foundation Terraform
 
-This Terraform config provisions a **production regional GKE cluster** with:
-- Workload Identity
-- Cluster autoscaling
-- Dedicated node pools: default, observability, chaos
+This directory adopts the existing staging foundation. It is intentionally limited to the project boundary, billing budget, approved foundation APIs, state bucket hardening, labels, and an optional non-authoritative project IAM baseline.
 
- 
-## Architecture
+It does not define GKE, node pools, disks, GitOps, Prometheus, application workloads, traffic generators, load balancers, NAT, Cloud Run, Scheduler, secrets, Artifact Registry, or logging and monitoring ingestion resources.
 
+## Remote State
 
-```mermaid
-flowchart TB
-    subgraph GCP["Google Cloud Platform"]
-        VPC["Custom VPC"]
-        subgraph GKE["Regional GKE Cluster"]
-            NP1["Default Node Pool </br> (apps / system)"]
-            NP2["Observability Node Pool </br> (Prometheus, Grafana)"]
-            NP3["Chaos Node Pool </br> (k6, chaos jobs)"]
+The backend is the existing bucket `sre-platform-staging-507220-tf-state` with prefix `terraform/staging-foundation`. Backend initialization is a state write operation and requires separate approval.
 
-            NS1["namespace: default"]
-            NS2["namespace: observability"]
-            NS3["namespace: chaos-load"]
-        end
-    end
+## Operator Inputs
 
-    VPC --> GKE
-    NP1 --> NS1
-    NP2 --> NS2
-    NP3 --> NS3
+Never commit account identifiers, principal identifiers, state, plan files, or tfvars. Supply `billing_account_id` and the verified existing budget thresholds from an ignored local tfvars file or the operator environment.
+
+`project_iam_members` defaults to an empty map. It is deliberately non-authoritative: no IAM member is added, removed, or imported unless an explicitly approved local input provides it.
+
+## Import-First Workflow
+
+Run every command only after its required approval category.
+
+1. Initialize the backend after the backend/state-init approval:
+
+   ```powershell
+   terraform init -reconfigure
+   ```
+
+2. Import existing resources. Replace every redacted placeholder locally; do not put those values in this repository.
+
+   ```powershell
+   terraform import -var="billing_account_id=<redacted>" google_project.staging sre-platform-staging-507220
+   terraform import google_project_service.foundation["billingbudgets.googleapis.com"] sre-platform-staging-507220/billingbudgets.googleapis.com
+   terraform import google_project_service.foundation["serviceusage.googleapis.com"] sre-platform-staging-507220/serviceusage.googleapis.com
+   terraform import google_project_service.foundation["storage.googleapis.com"] sre-platform-staging-507220/storage.googleapis.com
+   terraform import google_storage_bucket.terraform_state sre-platform-staging-507220-tf-state
+   terraform import -var="billing_account_id=<redacted>" google_billing_budget.staging "billingAccounts/<redacted>/budgets/<redacted>"
+   ```
+
+3. Create a saved plan only after imports and its separate approval. Keep it outside Git, hash it with SHA-256, review it, and request an explicit plan-apply approval before any apply.
+
+   ```powershell
+   terraform plan -out=staging-foundation.tfplan
+   Get-FileHash -Algorithm SHA256 staging-foundation.tfplan
+   ```
+
+## Expected Changes After Import
+
+The project, budget, and approved APIs should converge without change when operator inputs exactly match the existing budget thresholds. The state bucket will propose the following hardening changes: uniform bucket-level access, public access prevention, versioning, a 30-day retention policy, a 7-day soft-delete policy, and foundation labels.
+
+Versioning and retention can retain small additional state-object storage. No compute, networking, workload, or telemetry ingestion cost is introduced.
+
+## Validation
+
+```powershell
+terraform fmt -check -recursive
+terraform validate
+.\scripts\check-staging-foundation-guardrails.ps1
 ```
 
-
-
-## Folder structure
-```text
-terraform/
-├── main.tf          # VPC + subnet + GKE cluster + node pools
-├── variables.tf
-├── outputs.tf
-└── README.md
-```
-## Deploy
-
-```bash
-terraform init
-terraform apply -var "project_id=YOUR_GCP_PROJECT_ID"
-```
-
-This repo's bootstrap flow uses Terraform only for infra (VPC + GKE). Kubernetes namespaces/apps are managed by Helm/ArgoCD.
-
+Live staging validation remains pending until backend initialization, imports, a reviewed saved plan, and the required approval categories are completed.
