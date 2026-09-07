@@ -6,7 +6,7 @@ It does not define GKE, node pools, disks, GitOps, Prometheus, application workl
 
 ## Remote State
 
-The backend is the existing bucket `sre-platform-staging-507220-tf-state` with prefix `terraform/staging-foundation`. Backend initialization is a state write operation and requires separate approval.
+The backend is the existing bucket `sre-platform-staging-507220-tf-state` with prefix `terraform/staging-foundation`. The backend intentionally starts with empty state; a pre-existing obsolete local state was discarded without inspection and must never be migrated into this foundation.
 
 ## Operator Inputs
 
@@ -18,10 +18,10 @@ Never commit account identifiers, principal identifiers, state, plan files, or t
 
 Run every command only after its required approval category.
 
-1. Initialize the backend after the backend/state-init approval:
+1. Initialize the empty backend after the backend/state-init approval:
 
    ```powershell
-   terraform init -reconfigure
+   terraform init -reconfigure -migrate-state=false
    ```
 
 2. Import existing resources. Replace every redacted placeholder locally; do not put those values in this repository.

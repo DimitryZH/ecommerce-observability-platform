@@ -4,7 +4,7 @@ Date: 2026-09-07
 
 ## Scope
 
-This is a read-only preflight for the existing `sre-platform-staging-507220` foundation. No cloud write, Terraform initialization, import, plan, or apply was performed.
+This is a read-only preflight for the existing `sre-platform-staging-507220` foundation. No cloud resource write, import, plan, or apply was performed.
 
 ## Verified Invariants
 
@@ -21,5 +21,7 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 - Existing non-foundation APIs are not disabled or managed by this baseline.
 - Existing IAM memberships are not copied into this repository. Optional IAM members require explicit approved operator input.
 - No raw state, plan, tfvars, credentials, account identifiers, or principal identifiers are recorded.
+- An obsolete, untracked local Terraform state was intentionally discarded without inspection. It is not part of this staging foundation and must not be migrated to the remote backend.
+- The new remote backend starts with empty state and will receive resources only through separately approved imports.
 
 Live staging validation remains pending until the required backend initialization, import, and saved-plan approval categories have completed.
