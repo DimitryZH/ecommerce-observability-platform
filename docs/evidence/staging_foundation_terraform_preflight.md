@@ -26,8 +26,8 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 
 ## Import Status
 
-- The empty remote backend now records the project, the three approved foundation APIs, and the state bucket.
-- The existing budget was not imported because the local Terraform authentication runtime requires a quota-project prerequisite. No credential, quota-project, budget, IAM, API, or other cloud resource change was made to address it.
+- The empty remote backend now records the project, the three approved foundation APIs, the state bucket, and the existing project-scoped budget.
+- A provider alias scopes quota-project attribution to Billing Budgets API calls only. No credential, IAM, API, budget, or other cloud resource change was made.
 - Read-only verification found only the expected imported addresses and no unexpected addresses. State content was not displayed.
 
 Live staging validation remains pending until the required backend initialization, import, and saved-plan approval categories have completed.

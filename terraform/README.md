@@ -14,6 +14,8 @@ Never commit account identifiers, principal identifiers, state, plan files, or t
 
 `project_iam_members` defaults to an empty map. It is deliberately non-authoritative: no IAM member is added, removed, or imported unless an explicitly approved local input provides it.
 
+The `google.budget` provider alias scopes quota-project attribution to Billing Budgets API calls only. The default provider remains free of that override so existing project reads do not require unrelated API activation.
+
 ## Import-First Workflow
 
 Run every command only after its required approval category.
@@ -42,7 +44,7 @@ Run every command only after its required approval category.
    Get-FileHash -Algorithm SHA256 staging-foundation.tfplan
    ```
 
-If the budget import reports a local Application Default Credentials quota-project prerequisite, stop. Do not change the quota-project configuration or retry the budget import without separate approval.
+If the budget import reports a local Application Default Credentials quota-project prerequisite, stop. Use the scoped `google.budget` provider alias only after separate approval; do not enable unrelated APIs or change credentials.
 
 ## Expected Changes After Import
 

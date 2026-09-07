@@ -3,6 +3,14 @@ provider "google" {
   region  = var.region
 }
 
+provider "google" {
+  alias                 = "budget"
+  project               = var.project_id
+  region                = var.region
+  billing_project       = var.project_id
+  user_project_override = true
+}
+
 data "google_project" "staging" {
   project_id = var.project_id
 }
@@ -64,6 +72,8 @@ resource "google_storage_bucket" "terraform_state" {
 }
 
 resource "google_billing_budget" "staging" {
+  provider = google.budget
+
   billing_account = var.billing_account_id
   display_name    = "sre-platform-staging-budget-100-cad"
 
