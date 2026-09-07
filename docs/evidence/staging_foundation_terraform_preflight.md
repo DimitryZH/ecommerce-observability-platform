@@ -24,4 +24,10 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 - An obsolete, untracked local Terraform state was intentionally discarded without inspection. It is not part of this staging foundation and must not be migrated to the remote backend.
 - The new remote backend starts with empty state and will receive resources only through separately approved imports.
 
+## Import Status
+
+- The empty remote backend now records the project, the three approved foundation APIs, and the state bucket.
+- The existing budget was not imported because the local Terraform authentication runtime requires a quota-project prerequisite. No credential, quota-project, budget, IAM, API, or other cloud resource change was made to address it.
+- Read-only verification found only the expected imported addresses and no unexpected addresses. State content was not displayed.
+
 Live staging validation remains pending until the required backend initialization, import, and saved-plan approval categories have completed.

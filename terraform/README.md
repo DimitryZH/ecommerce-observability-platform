@@ -42,6 +42,8 @@ Run every command only after its required approval category.
    Get-FileHash -Algorithm SHA256 staging-foundation.tfplan
    ```
 
+If the budget import reports a local Application Default Credentials quota-project prerequisite, stop. Do not change the quota-project configuration or retry the budget import without separate approval.
+
 ## Expected Changes After Import
 
 The project, budget, and approved APIs should converge without change when operator inputs exactly match the existing budget thresholds. The state bucket will propose the following hardening changes: uniform bucket-level access, public access prevention, versioning, a 30-day retention policy, a 7-day soft-delete policy, and foundation labels.
