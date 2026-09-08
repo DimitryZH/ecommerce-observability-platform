@@ -16,6 +16,8 @@ Never commit account identifiers, principal identifiers, state, plan files, or t
 
 The `google.budget` provider alias scopes quota-project attribution to Billing Budgets API calls only. The default provider remains free of that override so existing project reads do not require unrelated API activation.
 
+The imported budget uses `ignore_changes = all` until a separate budget-management approval. Terraform preserves the imported budget in state but cannot modify or delete it through this baseline.
+
 ## Import-First Workflow
 
 Run every command only after its required approval category.

@@ -68,6 +68,7 @@ resource "google_storage_bucket" "terraform_state" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [lifecycle_rule]
   }
 }
 
@@ -99,6 +100,7 @@ resource "google_billing_budget" "staging" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = all
   }
 }
 

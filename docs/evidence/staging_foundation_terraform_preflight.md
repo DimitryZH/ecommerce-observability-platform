@@ -28,6 +28,7 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 
 - The empty remote backend now records the project, the three approved foundation APIs, the state bucket, and the existing project-scoped budget.
 - A provider alias scopes quota-project attribution to Billing Budgets API calls only. No credential, IAM, API, budget, or other cloud resource change was made.
+- The imported budget is protected from drift and apply through `ignore_changes = all` until a separate budget-management approval.
 - Read-only verification found only the expected imported addresses and no unexpected addresses. State content was not displayed.
 
 Live staging validation remains pending until the required backend initialization, import, and saved-plan approval categories have completed.
