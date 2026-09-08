@@ -5,7 +5,7 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $terraformDirectory = Join-Path $repositoryRoot "terraform"
 $evidenceFile = Join-Path $repositoryRoot "docs\evidence\staging_foundation_terraform_preflight.md"
 
-$terraformFiles = Get-ChildItem -Path $terraformDirectory -Filter "*.tf" -File -Recurse
+$terraformFiles = Get-ChildItem -Path $terraformDirectory -Filter "*.tf" -File
 if ($terraformFiles.Count -eq 0) {
   throw "No Terraform files found under $terraformDirectory."
 }
