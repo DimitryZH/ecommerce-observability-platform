@@ -4,7 +4,7 @@ Date: 2026-09-07
 
 ## Scope
 
-This is a read-only preflight for the existing `sre-platform-staging-507220` foundation. No cloud resource write, import, plan, or apply was performed.
+This began as a read-only preflight for the existing `sre-platform-staging-507220` foundation. Imports and one separately approved apply were subsequently completed; the apply was limited to project labels and state-bucket labels plus bounded, non-locked retention.
 
 ## Verified Invariants
 
@@ -14,7 +14,7 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 - Billing was enabled. One existing 100 CAD budget was scoped to exactly that project through its numeric project reference.
 - The billing boundary retained `roles/billing.costsManager`; broad `roles/billing.admin` and public principals were absent.
 - The direct state-bucket IAM policy contained no public principals or legacy bucket pseudo-principals.
-- The state bucket existed in `US-CENTRAL1`, but bucket hardening settings were not yet enabled. Terraform describes these changes without applying them.
+- The state bucket is in `US-CENTRAL1` with uniform bucket-level access, public access prevention, versioning, a 30-day non-locked retention policy, a 7-day soft-delete policy, and foundation labels.
 
 ## Deliberate Limits
 
@@ -31,4 +31,10 @@ This is a read-only preflight for the existing `sre-platform-staging-507220` fou
 - The imported budget is protected from drift and apply through `ignore_changes = all` until a separate budget-management approval.
 - Read-only verification found only the expected imported addresses and no unexpected addresses. State content was not displayed.
 
-Live staging validation remains pending until the required backend initialization, import, and saved-plan approval categories have completed.
+## Approved Apply Status
+
+- The exact reviewed saved plan was applied after SHA-256, resource-address, action, cost-heavy-resource, and retention-lock checks.
+- The apply changed only project labels plus state-bucket labels and the bounded 30-day retention policy.
+- No budget, IAM, API, compute, network, workload, logging, monitoring, or other cloud resource change was applied.
+
+Live staging validation remains pending. No live workload or investigation validation was performed.

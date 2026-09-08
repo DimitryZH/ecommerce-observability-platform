@@ -48,9 +48,9 @@ Run every command only after its required approval category.
 
 If the budget import reports a local Application Default Credentials quota-project prerequisite, stop. Use the scoped `google.budget` provider alias only after separate approval; do not enable unrelated APIs or change credentials.
 
-## Expected Changes After Import
+## Applied Foundation Baseline
 
-The project, budget, and approved APIs should converge without change when operator inputs exactly match the existing budget thresholds. The state bucket will propose the following hardening changes: uniform bucket-level access, public access prevention, versioning, a 30-day retention policy, a 7-day soft-delete policy, and foundation labels.
+The project, budget, and approved APIs converge without change when operator inputs exactly match the existing budget thresholds. The reviewed staging plan applied project and state-bucket labels plus a bounded, non-locked 30-day state-bucket retention policy. Uniform bucket-level access, public access prevention, versioning, and the 7-day soft-delete policy already matched the configuration and required no action.
 
 Versioning and retention can retain small additional state-object storage. No compute, networking, workload, or telemetry ingestion cost is introduced.
 
@@ -62,4 +62,4 @@ terraform validate
 .\scripts\check-staging-foundation-guardrails.ps1
 ```
 
-Live staging validation remains pending until backend initialization, imports, a reviewed saved plan, and the required approval categories are completed.
+Live staging validation remains pending. Terraform foundation adoption, imports, and the separately approved metadata and retention apply are complete.
