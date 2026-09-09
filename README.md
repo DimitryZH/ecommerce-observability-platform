@@ -98,7 +98,7 @@ Operator guide:
 
 
 ```mermaid
-flowchart LR
+flowchart TB
     K6[k6 Load / Failure Jobs] --> Ingress[Ingress]
     Ingress --> App[online-shop frontend]
     App --> Metrics[Ingress / App Metrics]
@@ -194,6 +194,17 @@ The platform is designed for deterministic, repeatable failure tests. A typical 
 5. Watch the rollout automatically abort
 6. See merge or promotion blocked when risk is too high
 
+## Documentation
+
+- [Architecture](docs/architecture.md) - target design, control loops, and system boundaries.
+- [Validation history](docs/validation-history.md) - public record of historical evidence, current reconstruction state, and revalidation requirements.
+- [Roadmap](docs/roadmap.md) - public milestones, ownership boundaries, and production-entry criteria.
+- [Deployment guide](docs/deployment_guide.md) - historical dev bootstrap and convergence procedure.
+- [SLO validation](docs/slo_validation_dev_environment.md) - detailed dev observability and SLO validation evidence.
+- [SLO verification summary](docs/slo_verification_summary.md) - accepted results and known validation limits.
+- [SLO-gated rollout case study](docs/case-study/slo_rollout_demo.md) - healthy promotion, abort, and recovery narrative.
+- [Evidence](docs/evidence/) - CLI excerpts, Terraform preflight records, and preserved load-run artifacts.
+
 ## Repository layout
 
 - [`charts/`](charts/)
@@ -210,8 +221,10 @@ The platform is designed for deterministic, repeatable failure tests. A typical 
   - [`observability/grafana/global-slo-dashboard.json`](observability/grafana/global-slo-dashboard.json)
 
 - [`docs/`](docs/)
-  - [`docs/architecture.md`](docs/architecture.md) – Architecture doc guide for the SLO-driven platform
-  - [`docs/load-to-slo-timeline.md`](docs/load-to-slo-timeline.md)
+  - Public architecture, validation, roadmap, deployment, case-study, and evidence documentation
+
+- [`validation/stage/`](validation/stage/)
+  - Operator-run baseline, failure-traffic, and Prometheus precheck fixtures for staging validation
 
 - [`k6/`](k6/)
   - [`k6/README.md`](k6/README.md)
@@ -258,58 +271,4 @@ This repository is intended to showcase practical experience with:
 - Observability and SLO design
 - Release-risk management with error budgets
 
-## Definition of done
-
-The platform is considered successful when:
-
-- Canary rollouts execute automatically
-- SLO violations trigger rollback without manual intervention
-- Error-budget metrics reflect real user-impacting degradation
-- Git or CI-based gates block risky releases
-- Dashboards clearly explain why a release was promoted or rolled back
-
-## Future extensions (out of scope)
-
-Deliberately excluded to keep the example focused:
-
-- Service mesh integration
-- Multi-cluster or multi-region federation
-- ML-based anomaly detection
-- Custom Kubernetes operators
-
-## Prerequisites and ecosystem
-
-This SRE platform consumes immutable container images built and published by separate platforms:
-
-- CI Build Platform – builds and tags container images
-- Container Platform – immutable image registry (for example, Docker Hub)
-- SRE Platform (this repository) – GitOps deployment + SLO governance
-
-Images are built once and then treated as immutable artifacts that flow through the ecosystem:
-
-> CI Build Platform → Container Platform → SRE Platform (GKE)
-
-## Platform ecosystem
-
-The full platform consists of three main components:
-
-- [CI Build Platform](https://github.com/DimitryZH/ci-build-platform)
-- [Container Platform (GitHub)](https://github.com/DimitryZH/container-platform) and [Docker Hub Repository](https://hub.docker.com/u/dmitryzhuravlev)
-- [SRE Platform (this repo)](https://github.com/DimitryZH/ecommerce-observability-platform)
-
-```mermaid
-flowchart LR
-    CI[CI Build Platform] -->|Build and Tag Images| DockerHub[Container Platform]
-    DockerHub -->|Provide Images to Deploy| SRE[SRE Platform on GKE]
-
-    subgraph Platforms Ecosystem
-        CI
-        DockerHub
-        SRE
-    end
-
-    style CI fill:#E5F2FF,stroke:#1E70BF,stroke-width:2px
-    style DockerHub fill:#FFF2E5,stroke:#BF5E1E,stroke-width:2px
-    style SRE fill:#E5FFE5,stroke:#1EBF2F,stroke-width:2px
-```
 
