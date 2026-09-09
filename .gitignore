@@ -1,0 +1,25 @@
+# Private working documentation
+/docs/*.local.md
+/docs/internal/
+
+# Local render and operator artifacts
+_rendered_platform*
+stage-rollout-clear-restart-patch.json
+/tools/
+argocd_app_fix.md
+troubleshooting.md
+
+# Terraform runtime artifacts and operator-only inputs
+/terraform/tfplan
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
