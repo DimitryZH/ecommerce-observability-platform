@@ -65,10 +65,10 @@ Stop the future deployment if the PVC exceeds 75 percent in its first hour, Prom
 | Platform dependency lock digest | `b8386e371de8c6bf29ee67a937f0036365668dd76dbc95bfc34eaaaed3cff25b` | Must remain unchanged |
 | Argo Rollouts chart | `2.32.0` | Existing pinned reference |
 | kube-prometheus-stack chart | `65.5.1` | Existing pinned reference |
-| Argo CD chart | Unpinned | Hard blocker |
-| ingress-nginx chart | Unpinned | Hard blocker |
+| Argo CD chart | `7.8.28` / `v2.14.11` | Pinned staging input; see controller render evidence |
+| ingress-nginx chart | `4.12.1` / `1.12.1` | Pinned staging input; see controller render evidence |
 
-Argo CD and ingress-nginx must be pinned and their merged values reviewed before any live action. Do not refresh Helm repositories or accept a changed dependency lock to resolve this blocker.
+Argo CD and ingress-nginx now have pinned staging inputs and reviewed values. Their deterministic local render is recorded in [the controller render evidence](../evidence/staging_controller_render.md). Do not refresh Helm repositories or accept a changed dependency lock; all remaining preflight, capacity, exact-plan, and live-action approval gates remain in force.
 
 ## Terraform Capacity And Node-Recreation Gates
 
@@ -79,7 +79,7 @@ A GKE node machine-type update recreates nodes. The exact future Terraform plan 
 ## Proposed Deployment Order
 
 1. Repeat sanitized preflight. Require a fresh budget boundary check and a successful sanitized IAM public-principal check.
-2. Pin and review Argo CD and ingress-nginx versions and merged values. Stop on any dependency or version drift.
+2. Re-render the pinned Argo CD and ingress-nginx inputs with their reviewed values. Stop on any dependency or version drift.
 3. Create, review, and separately approve an exact Terraform plan for the temporary node capacity change, including the temporary machine-type validation change, an explicit node-pool operation, no cluster replacement, and a six-hour return plan.
 4. Apply that capacity plan only after exact-plan approval, then verify allocatable capacity and node readiness.
 5. Install ingress-nginx, Argo CD, and Argo Rollouts in separately reviewed actions; verify resource requests, readiness, and absence of unexpected public endpoints after each action.

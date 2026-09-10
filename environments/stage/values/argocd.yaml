@@ -1,0 +1,69 @@
+# Reviewed staging input for argo/argo-cd 7.8.28. This file is not a live release.
+createAggregateRoles: false
+createClusterRoles: true
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  # Chart 7.8.28 has no enabled switch; zero replicas disables the controller.
+  replicas: 0
+
+# No Argo CD extension configuration or extension containers are enabled for staging.
+
+redis-ha:
+  enabled: false
+
+controller:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+repoServer:
+  # The chart applies this block to both repo-server and copyutil containers.
+  # Their combined request stays within the reviewed 100m / 128Mi envelope.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 125m
+      memory: 128Mi
+
+server:
+  ingress:
+    enabled: false
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 128Mi
+
+redisSecretInit:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

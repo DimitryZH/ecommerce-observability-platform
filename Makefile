@@ -3,7 +3,8 @@
   load-capture-baseline load-capture-failure-10 load-capture-failure-50 \
   check-project preflight helm-lint render kubeconform-install kube-validate \
   tf-validate tf-plan terraform-init terraform-apply terraform-destroy kubeconfig \
-  helm-bootstrap install-ingress install-argocd install-argo-rollouts argocd-root status
+  helm-bootstrap install-ingress install-argocd install-argo-rollouts \
+  install-staging-ingress install-staging-argocd render-staging-controllers argocd-root status
 
 # Set this when running:
 #   make bootstrap PROJECT_ID=your-gcp-project
@@ -42,6 +43,10 @@ KUBECONFORM_URL := https://github.com/yannh/kubeconform/releases/download/$(KUBE
 LOAD_NAMESPACE ?= online-shop-dev
 K6_SCRIPTS_CONFIGMAP ?= online-shop-k6-scripts
 BASH_BIN ?= "C:\Program Files\Git\bin\bash.exe"
+STAGING_ARGOCD_CHART_VERSION ?= 7.8.28
+STAGING_INGRESS_NGINX_CHART_VERSION ?= 4.12.1
+STAGING_ARGOCD_VALUES ?= environments/stage/values/argocd.yaml
+STAGING_INGRESS_NGINX_VALUES ?= environments/stage/values/ingress-nginx.yaml
 
 check-project:
 	@if "$(PROJECT_ID)"=="" (echo ERROR: PROJECT_ID is required. Example: make bootstrap PROJECT_ID=my-gcp-project & exit /b 1)
@@ -124,6 +129,17 @@ install-argocd: helm-bootstrap
 	helm upgrade --install argo-cd argo/argo-cd -n argocd --create-namespace
 	@echo Waiting for ArgoCD server deployment to be ready
 	kubectl -n argocd rollout status deploy/argo-cd-argocd-server --timeout=10m
+
+# Staging controller commands are intentionally separate and pin reviewed inputs.
+# Do not run without the separate live-action approval required by Issue #9.
+render-staging-controllers:
+	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-staging-controllers.ps1
+
+install-staging-ingress:
+	helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version $(STAGING_INGRESS_NGINX_CHART_VERSION) -n ingress-nginx --create-namespace -f $(STAGING_INGRESS_NGINX_VALUES)
+
+install-staging-argocd:
+	helm upgrade --install argo-cd argo/argo-cd --version $(STAGING_ARGOCD_CHART_VERSION) -n argocd --create-namespace -f $(STAGING_ARGOCD_VALUES)
 
 install-argo-rollouts: helm-bootstrap
 	@echo Installing Argo Rollouts
