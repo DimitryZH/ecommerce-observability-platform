@@ -48,7 +48,7 @@ The application steady-state total is 600m CPU and 1216Mi memory. The controlled
 | Prometheus Operator | 75m / 250m | 128Mi / 256Mi |
 | Admission patch Job, temporary | 50m / 100m | 64Mi / 128Mi |
 
-The proposed platform steady state is 1550m CPU and 2688Mi memory. The peak, including the canary and one temporary admission Job, is 1675m CPU and 2880Mi memory. Adding the 700m CPU and 768Mi system reserve yields 2375m CPU and 3648Mi memory. Future scheduling verification must require at least 1200m CPU and 4Gi memory of additional headroom after those totals; the proposed temporary node shape is expected to meet this but must be verified from live allocatable capacity before controllers are installed.
+The long-running platform-component subtotal is 950m CPU and 1472Mi memory. The 50m CPU and 64Mi admission patch Job is temporary and excluded from steady state. Combining the application subtotal with the long-running platform subtotal gives a steady-state footprint of 1550m CPU and 2688Mi memory. The peak, including the frontend canary surge and one temporary admission Job, is 1675m CPU and 2880Mi memory. Adding the 700m CPU and 768Mi system reserve yields 2375m CPU and 3648Mi memory. Future scheduling verification must require at least 1200m CPU and 4Gi memory of additional headroom after those totals; the proposed temporary node shape is expected to meet this but must be verified from live allocatable capacity before controllers are installed.
 
 ## Observability Policy
 
@@ -70,11 +70,17 @@ Stop the future deployment if the PVC exceeds 75 percent in its first hour, Prom
 
 Argo CD and ingress-nginx must be pinned and their merged values reviewed before any live action. Do not refresh Helm repositories or accept a changed dependency lock to resolve this blocker.
 
+## Terraform Capacity And Node-Recreation Gates
+
+The current runtime Terraform variable validation permits only `e2-medium`. A future, separately reviewed capacity PR must temporarily permit the selected `e2-standard-4` machine type. Its separately reviewed rollback PR and exact rollback plan must restore the original `e2-medium`-only restriction after the temporary validation window.
+
+A GKE node machine-type update recreates nodes. The exact future Terraform plan must show the expected node-pool operation explicitly and demonstrate that the GKE cluster itself is not replaced. The temporary capacity change may occur only while the cluster has no application or controller workloads. Return to the baseline node shape may occur only after separately approved cleanup of the temporary controllers and workloads. A plan showing cluster replacement, unexpected resource changes, or any wider scope is a stop condition.
+
 ## Proposed Deployment Order
 
 1. Repeat sanitized preflight. Require a fresh budget boundary check and a successful sanitized IAM public-principal check.
 2. Pin and review Argo CD and ingress-nginx versions and merged values. Stop on any dependency or version drift.
-3. Create, review, and separately approve an exact Terraform plan for the temporary node capacity change, including a six-hour return plan.
+3. Create, review, and separately approve an exact Terraform plan for the temporary node capacity change, including the temporary machine-type validation change, an explicit node-pool operation, no cluster replacement, and a six-hour return plan.
 4. Apply that capacity plan only after exact-plan approval, then verify allocatable capacity and node readiness.
 5. Install ingress-nginx, Argo CD, and Argo Rollouts in separately reviewed actions; verify resource requests, readiness, and absence of unexpected public endpoints after each action.
 6. Install the constrained kube-prometheus-stack profile and verify PVC, retention, scrape scope, and rule health.
@@ -85,7 +91,7 @@ Argo CD and ingress-nginx must be pinned and their merged values reviewed before
 
 Stop before progressing on any Pending workload, OOMKilled container, eviction, disk pressure, node not Ready, unexpected LoadBalancer or Ingress, failed readiness check, failed analysis, failed scrape or rule, or missing budget/IAM precondition.
 
-Rollback means halting the rollout, restoring the last known good application revision, and removing only the separately approved application/controller resources. Cleanup must remove temporary capacity through its exact reviewed Terraform plan, then verify that the node shape is restored. No budget, IAM, foundation-state-bucket, or network change belongs in this plan.
+Rollback means halting the rollout, restoring the last known good application revision, and removing only the separately approved application/controller resources. Cleanup must remove temporary capacity through its exact reviewed Terraform rollback plan, restore the `e2-medium`-only validation restriction, and verify that the node shape is restored. No budget, IAM, foundation-state-bucket, or network change belongs in this plan.
 
 ## Cost Expectations And Approval Gate
 
