@@ -1,0 +1,36 @@
+# Reviewed staging input for ingress-nginx/ingress-nginx 4.12.1. This file is not a live release.
+controller:
+  replicaCount: 1
+  watchIngressWithoutClass: false
+  ingressClassResource:
+    enabled: true
+    default: false
+  scope:
+    enabled: true
+    namespace: online-shop-stage
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  service:
+    enabled: true
+    type: ClusterIP
+    external:
+      enabled: false
+  metrics:
+    enabled: true
+    service:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+      scrapeInterval: 30s
+  admissionWebhooks:
+    enabled: false
+
+defaultBackend:
+  enabled: false
